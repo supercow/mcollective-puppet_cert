@@ -63,30 +63,25 @@ module MCollective
       end
 
       action "list" do
+        puppet_cert = get_cert
+        puppet_cert ||= get_csr
 
-        raw_cert = get_cert
-        if raw_cert != nil
-          cert = OpenSSL::X509::Certificate.new raw_cert.content
-          extensions = cert.extensions
+        if puppet_cert.is_a? ::Puppet::SSL::Certificate
+          cert = OpenSSL::X509::Certificate.new puppet_cert.content
+        elsif puppet_cert.is_a? ::Puppet::SSL::CertificateRequest
+          cert = OpenSSL::X509::Request.new puppet_cert.content
+        else
+          reply.fail "No valid ::Puppet certificate or CSR found."
+        end
 
-          reply[:cn] = cert.subject.to_s
+        reply[:cn] = cert.subject.to_s
+        if cert.is_a? OpenSSL::X509::Certificate
           reply[:expiration] = cert.not_after.to_s
           reply[:valid_from] = cert.not_before.to_s
-          reply[:alt_name] = raw_cert.subject_alt_names
-          reply[:fingerprint] = get_fingerprint raw_cert
-          reply[:type] = raw_cert.class.name
-        else
-          raw_csr = get_csr
-          csr = OpenSSL::X509::Request.new raw_csr.content
-          extensions = csr.attributes
-
-          reply[:cn] = csr.subject.to_s
-          reply[:expiration] = nil
-          reply[:valid_from] = nil
-          reply[:alt_name] = raw_csr.subject_alt_names
-          reply[:fingerprint] = get_fingerprint raw_csr
-          reply[:type] = raw_csr.class.name
         end
+        reply[:alt_name] = puppet_cert.subject_alt_names
+        reply[:fingerprint] = get_fingerprint puppet_cert
+        reply[:type] = puppet_cert.class.name
       end
 
     end
