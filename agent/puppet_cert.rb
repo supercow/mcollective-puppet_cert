@@ -15,13 +15,24 @@ module MCollective
         @certname = ::Puppet[:certname]
       end
 
-      action "clean_self" do
+      def clean_own_ssl
+        ::Puppet::Face[:certificate,'0.0.1'].destroy @certname, {:ca_location => 'local'}
+        ::Puppet::Face[:key,'0.0.1'].destroy @certname
+        ::Puppet::Face[:certificate_request,'0.0.1'].destroy @certname
+      end
+
+      def clean_cached_ca
+        ::Puppet::Face[:certificate,'0.0.1'].destroy 'ca', {:ca_location => 'local'}
+
+        # dummy text required - #7833
+        ::Puppet::Face[:certificate_revocation_list,'0.0.1'].destroy 'dummy_text_just_because'
+      end
+
+      action "clean_agent" do
         reply[:success] = true
         begin
-          ::Puppet::Face[:certificate,'0.0.1'].destroy @certname, {:ca_location => 'local'}
-          ::Puppet::Face[:key,'0.0.1'].destroy @certname
-          ::Puppet::Face[:certificate_request,'0.0.1'].destroy @certname
-          ::Puppet::Face[:certificate,'0.0.1'].destroy 'ca', {:ca_location => 'local'}
+          clean_own_ssl
+          clean_cached_ca unless request[:clean_ca] == false
         rescue
           reply[:success] = false
         end

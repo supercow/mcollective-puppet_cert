@@ -8,8 +8,15 @@ metadata :name => "puppet_cert",
 
 requires :mcollective => "2.2.1"
 
-action "clean_self", :description => "Clean local SSL keys and certs from the puppet agent" do
+action "clean_agent", :description => "Clean local SSL keys and certs from the puppet agent" do
   display :always
+
+  input :clean_ca,
+        :prompt      => "Clean cached CA data?",
+        :description => "Will clean cached CA certs and CRLs",
+        :type        => :boolean,
+        :default     => true,
+        :optional    => true
 
 end
 
