@@ -15,40 +15,16 @@ module MCollective
         @certname = ::Puppet[:certname]
       end
 
-      def remove_ssl_object
-        retval = nil
-        begin
-          retval = yield
-        rescue Exception => e
-          retval = e.message
-        end
-
-        case retval
-        when true
-          "Removed successfully."
-        when false
-          "Already removed."
-        else
-          retval
-        end
-      end
-
       action "clean_self" do
-        reply[:own_cert] = remove_ssl_object {
+        reply[:success] = true
+        begin
           ::Puppet::Face[:certificate,'0.0.1'].destroy @certname, {:ca_location => 'local'}
-        }
-
-        reply[:key] = remove_ssl_object {
           ::Puppet::Face[:key,'0.0.1'].destroy @certname
-        }
-
-        reply[:cer] = remove_ssl_object {
           ::Puppet::Face[:certificate_request,'0.0.1'].destroy @certname
-        }
-
-        reply[:ca_cert] = remove_ssl_object {
           ::Puppet::Face[:certificate,'0.0.1'].destroy 'ca', {:ca_location => 'local'}
-        }
+        rescue
+          reply[:success] = false
+        end
       end
 
       action "list" do

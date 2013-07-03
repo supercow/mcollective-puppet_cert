@@ -11,26 +11,6 @@ requires :mcollective => "2.2.1"
 action "clean_self", :description => "Clean local SSL keys and certs from the puppet agent" do
   display :always
 
-  output :own_cert,
-         :description => "The status of cleaning the agent certificate",
-         :display_as  => "Agent certificate",
-         :default     => ''
-
-  output :key,
-         :description => "The status of cleaning the agent keys",
-         :display_as  => "Agent keys",
-         :default     => ''
-
-  output :cer,
-         :description => "The status of cleaning the agent certificate request",
-         :display_as  => "Agent certificate request",
-         :default     => ''
-
-  output :ca_cert,
-         :description => "The status of cleaning the CA cert from the agent",
-         :display_as  => "CA Cert",
-         :default     => ''
-
 end
 
 action "list", :description => "List details of each puppet agent's certificate" do
