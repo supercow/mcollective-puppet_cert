@@ -32,6 +32,20 @@ module MCollective
         ::Puppet::Face[:certificate,'0.0.1'].generate @certname, {:ca_location => 'remote'}
       end
 
+      def get_cert
+        ::Puppet::Face[:certificate,'0.0.1'].find @certname, {:ca_location => 'local'}
+      end
+
+      def get_csr
+        ::Puppet::Face[:certificate_request,'0.0.1'].find @certname
+      end
+
+      def get_fingerprint puppet_ssl_obj
+        algo = puppet_ssl_obj.digest_algorithm
+        hash = OpenSSL::Digest.new(algo, puppet_ssl_obj.content.to_der)
+        "(#{algo.upcase}) #{hash.hexdigest.scan(/../).join(':').upcase}"
+      end
+
       action "regen" do
         clean_own_ssl
         clean_cached_ca
@@ -49,26 +63,30 @@ module MCollective
       end
 
       action "list" do
-        # would be really f'in sweet if I could use faces here...
-        raw = File.read("#{@ssldir}/certs/#{@certname}.pem")
-        cert = OpenSSL::X509::Certificate.new raw
 
-        alt_name = ''
-        identifier = ''
-        cert.extensions.each do |ext|
-          case ext.oid
-          when 'subjectAltName'
-            alt_name = ext.value
-          when 'subjectKeyIdentifier'
-            identifier = ext.value
-          end
+        raw_cert = get_cert
+        if raw_cert != nil
+          cert = OpenSSL::X509::Certificate.new raw_cert.content
+          extensions = cert.extensions
+
+          reply[:cn] = cert.subject.to_s
+          reply[:expiration] = cert.not_after.to_s
+          reply[:valid_from] = cert.not_before.to_s
+          reply[:alt_name] = raw_cert.subject_alt_names
+          reply[:fingerprint] = get_fingerprint raw_cert
+          reply[:type] = raw_cert.class.name
+        else
+          raw_csr = get_csr
+          csr = OpenSSL::X509::Request.new raw_csr.content
+          extensions = csr.attributes
+
+          reply[:cn] = csr.subject.to_s
+          reply[:expiration] = nil
+          reply[:valid_from] = nil
+          reply[:alt_name] = raw_csr.subject_alt_names
+          reply[:fingerprint] = get_fingerprint raw_csr
+          reply[:type] = raw_csr.class.name
         end
-
-        reply[:cn] = cert.subject.to_s
-        reply[:expiration] = cert.not_after.to_s
-        reply[:alt_name] = alt_name.to_s
-        reply[:identifier] = identifier
-        reply[:valid_from] = cert.not_before.to_s
       end
 
     end

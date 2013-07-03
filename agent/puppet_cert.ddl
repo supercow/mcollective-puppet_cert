@@ -31,12 +31,12 @@ action "list", :description => "List details of each puppet agent's certificate"
   output :expiration,
          :description => "The expiration date of the puppet cert",
          :display_as  => "Expiration Date",
-         :default     => nil
+         :optional    => true
 
   output :valid_from,
          :description => "The date the puppet cert is valid from",
          :display_as  => "Valid from",
-         :default     => nil
+         :optional    => true
 
   output :cn,
          :description => "The certname of the puppet agent",
@@ -48,9 +48,15 @@ action "list", :description => "List details of each puppet agent's certificate"
          :display_as  => "subjectAltNames",
          :default     => ""
 
-  output :identifier,
-         :description => "The X509 fingerprint of the puppet agent cert",
-         :display_as  => "keyIdentifier",
+  output :fingerprint,
+         :description => "The hash fingerprint of the puppet agent cert",
+         :display_as  => "fingerprint",
          :default     => nil
+
+  output :type,
+         :description => "Whether the output describes a CSR or a signed cert",
+         :display_as  => "Type",
+         :default     => nil
+
 end
 
