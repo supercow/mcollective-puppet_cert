@@ -8,6 +8,11 @@ metadata :name => "puppet_cert",
 
 requires :mcollective => "2.2.1"
 
+action "regen", :description => "Cleans and regenerates puppet agent SSL keys and certs." do
+  display :always
+
+end
+
 action "clean_agent", :description => "Clean local SSL keys and certs from the puppet agent" do
   display :always
 

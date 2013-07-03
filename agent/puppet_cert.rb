@@ -28,6 +28,16 @@ module MCollective
         ::Puppet::Face[:certificate_revocation_list,'0.0.1'].destroy 'dummy_text_just_because'
       end
 
+      def generate_cer
+        ::Puppet::Face[:certificate,'0.0.1'].generate @certname, {:ca_location => 'remote'}
+      end
+
+      action "regen" do
+        clean_own_ssl
+        clean_cached_ca
+        generate_cer
+      end
+
       action "clean_agent" do
         reply[:success] = true
         begin
